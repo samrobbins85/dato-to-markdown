@@ -6,6 +6,9 @@ import rehype from "rehype";
 import rehype2remark from "rehype-remark";
 import stringify from "remark-stringify";
 import fs from "fs";
+import inquirer from "inquirer";
+import pluralize from "pluralize";
+import capitalize from "capitalize";
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
@@ -31,18 +34,18 @@ async function fetchAPI(query, { variables } = {}) {
   return json.data;
 }
 
-async function getAllBlogs() {
+async function getAllBlogs(model, title, structuredtext) {
   const data = await fetchAPI(`
     {
-      allArticles(orderBy: date_DESC) {
-        slug
-        structuredtext{
+      all${capitalize(pluralize(model))} {
+        ${title}
+        ${structuredtext}{
           value
         }        
       }
     }
     `);
-  return data.allArticles;
+  return data[`all${capitalize(pluralize(model))}`];
 }
 
 async function stToMD(structuredtext) {
@@ -69,21 +72,43 @@ async function stToMD(structuredtext) {
   return String(markdown);
 }
 
-const blogs = await getAllBlogs();
+inquirer
+  .prompt([
+    {
+      type: "input",
+      name: "model",
+      message: "Which model do you want to query?",
+    },
+    {
+      type: "input",
+      name: "title",
+      message: "What's the name of the field you want to use as file names?",
+    },
+    {
+      type: "input",
+      name: "structuredtext",
+      message: "Which field contains the structured text?",
+    },
+  ])
+  .then(async function (answers) {
+    const blogs = await getAllBlogs(
+      answers.model,
+      answers.title,
+      answers.structuredtext
+    );
 
-for (const page in blogs) {
-  const md = await stToMD(blogs[page].structuredtext);
-  console.log(md);
-  fs.writeFile(
-    `${process.cwd()}/blogs/${blogs[page].slug}.md`,
-    md,
-    { flag: "w+" },
-    (err) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      //file written successfully
+    for (const page in blogs) {
+      const md = await stToMD(blogs[page].structuredtext);
+      fs.writeFile(
+        `${process.cwd()}/blogs/${blogs[page].slug}.md`,
+        md,
+        { flag: "w+" },
+        (err) => {
+          if (err) {
+            console.error(err);
+            return;
+          }
+        }
+      );
     }
-  );
-}
+  });
