@@ -12,6 +12,9 @@
     "index.mjs",
     "readme.md"
   ],
+  "bin": {
+    "dato-to-markdown": "index.mjs"
+  },
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/samrobbins85/dato-to-markdown/issues"
