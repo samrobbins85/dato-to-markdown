@@ -2,18 +2,24 @@
   "name": "dato-to-markdown",
   "version": "1.0.5",
   "description": "Convert DatoCMS structured text to markdown",
-  "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/samrobbins85/dato-to-markdown.git"
   },
   "author": "Sam Robbins",
+  "source": "index.js",
+  "main": "./dist/index.js",
+  "exports": "./dist/main.modern.js",
+  "module": "./dist/index.module.js",
+  "unpkg": "./dist/index.umd.js",
   "files": [
-    "index.js",
-    "readme.md"
+    "dist"
   ],
   "bin": {
     "dato-to-markdown": "index.js"
+  },
+  "scripts": {
+    "build": "microbundle"
   },
   "license": "MIT",
   "type": "module",
