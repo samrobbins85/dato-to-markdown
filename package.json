@@ -12,7 +12,9 @@
     "index.mjs",
     "readme.md"
   ],
-  "bin": "index.js",
+  "bin": {
+    "dato-to-markdown": "index.js"
+  },
   "license": "MIT",
   "type": "module",
   "bugs": {
