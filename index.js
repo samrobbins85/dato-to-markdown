@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { render, renderRule } from "datocms-structured-text-to-html-string";
 import { isCode } from "datocms-structured-text-utils";
@@ -9,9 +8,7 @@ import fs from "fs";
 import inquirer from "inquirer";
 import pluralize from "pluralize";
 import capitalize from "capitalize";
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
+
 async function fetchAPI(token, query, { variables } = {}) {
   const res = await fetch("https://graphql.datocms.com/", {
     method: "POST",
