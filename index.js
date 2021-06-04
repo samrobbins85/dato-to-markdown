@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import fetch from "node-fetch";
 import { render, renderRule } from "datocms-structured-text-to-html-string";
 import { isCode } from "datocms-structured-text-utils";
