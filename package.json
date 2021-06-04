@@ -1,6 +1,6 @@
 {
   "name": "dato-to-markdown",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Convert DatoCMS structured text to markdown",
   "main": "index.mjs",
   "repository": {
