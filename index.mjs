@@ -12,12 +12,12 @@ import capitalize from "capitalize";
 if (process.env.NODE_ENV !== "production") {
   dotenv.config();
 }
-async function fetchAPI(query, { variables } = {}) {
+async function fetchAPI(token, query, { variables } = {}) {
   const res = await fetch("https://graphql.datocms.com/", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.DATO}`,
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
       query,
@@ -34,8 +34,10 @@ async function fetchAPI(query, { variables } = {}) {
   return json.data;
 }
 
-async function getAllBlogs(model, title, structuredtext) {
-  const data = await fetchAPI(`
+async function getAllBlogs(token, model, title, structuredtext) {
+  const data = await fetchAPI(
+    token,
+    `
     {
       all${capitalize(pluralize(model))} {
         ${title}
@@ -44,7 +46,8 @@ async function getAllBlogs(model, title, structuredtext) {
         }        
       }
     }
-    `);
+    `
+  );
   return data[`all${capitalize(pluralize(model))}`];
 }
 
@@ -76,6 +79,11 @@ inquirer
   .prompt([
     {
       type: "input",
+      name: "token",
+      message: "What's your API Token?",
+    },
+    {
+      type: "input",
       name: "model",
       message: "Which model do you want to query?",
     },
@@ -89,18 +97,37 @@ inquirer
       name: "structuredtext",
       message: "Which field contains the structured text?",
     },
+    {
+      type: "confirm",
+      name: "folder",
+      message: "Do you want the files to be put in a folder?",
+    },
+    {
+      type: "input",
+      name: "folder_name",
+      message: "Okay! What name do you want the folder to have?",
+      when(answers) {
+        return answers.folder;
+      },
+    },
   ])
   .then(async function (answers) {
     const blogs = await getAllBlogs(
+      answers.token,
       answers.model,
       answers.title,
       answers.structuredtext
     );
 
+    if (answers.folder && !fs.existsSync(`./${answers.folder_name}`)) {
+      fs.mkdirSync(`./${answers.folder_name}`);
+    }
     for (const page in blogs) {
       const md = await stToMD(blogs[page].structuredtext);
       fs.writeFile(
-        `${process.cwd()}/blogs/${blogs[page].slug}.md`,
+        `${process.cwd()}/${answers.folder ? `${answers.folder_name}/` : ""}${
+          blogs[page].slug
+        }.md`,
         md,
         { flag: "w+" },
         (err) => {
