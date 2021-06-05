@@ -9,7 +9,7 @@ import fs from "fs";
 import inquirer from "inquirer";
 import pluralize from "pluralize";
 import capitalize from "capitalize";
-
+import ora from "ora";
 async function fetchAPI(token, query, { variables } = {}) {
   const res = await fetch("https://graphql.datocms.com/", {
     method: "POST",
@@ -21,13 +21,11 @@ async function fetchAPI(token, query, { variables } = {}) {
       query,
       variables,
     }),
-  });
-  const json = await res.json();
-
-  if (json.errors) {
-    console.error(json.errors);
+  }).catch((e) => console.log(e));
+  if (!res.ok) {
     throw new Error("Failed to fetch API");
   }
+  const json = await res.json().catch((e) => console.log(e));
 
   return json.data;
 }
@@ -45,7 +43,7 @@ async function getAllBlogs(token, model, title, structuredtext) {
       }
     }
     `
-  );
+  ).catch((e) => console.log(e));
   return data[`all${capitalize(pluralize(model))}`];
 }
 
@@ -110,18 +108,26 @@ inquirer
     },
   ])
   .then(async function (answers) {
+    const fetching = ora("Fetching data").start();
     const blogs = await getAllBlogs(
       answers.token,
       answers.model,
       answers.title,
       answers.structuredtext
-    );
+    ).catch((e) => {
+      fetching.fail();
+      throw new Error("Couldn't get blog content");
+    });
+    fetching.succeed();
 
     if (answers.folder && !fs.existsSync(`./${answers.folder_name}`)) {
       fs.mkdirSync(`./${answers.folder_name}`);
     }
+    const converting = ora("Converting to markdown").start();
     for (const page in blogs) {
-      const md = await stToMD(blogs[page].structuredtext);
+      const md = await stToMD(blogs[page].structuredtext).catch((e) =>
+        console.log(e)
+      );
       fs.writeFile(
         `${process.cwd()}/${answers.folder ? `${answers.folder_name}/` : ""}${
           blogs[page].slug
@@ -131,9 +137,14 @@ inquirer
         (err) => {
           if (err) {
             console.error(err);
+            converting.fail();
             return;
           }
         }
       );
     }
+    converting.succeed();
+  })
+  .catch((e) => {
+    console.log(e);
   });
